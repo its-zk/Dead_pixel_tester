@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Display Tester</title>
+  <link rel="stylesheet" href="/assets/css/styles.css" />
+</head>
+<body>
+
+<div class="page-wrapper">
+
+  <!-- Header -->
+  <header class="site-header">
+    <h1>Display <span>Tester</span></h1>
+    <p>Detect your screen capabilities and run a dead-pixel test — all in the browser.</p>
+  </header>
+
+  <!-- Step 1: Display Detection -->
+  <section class="card" id="step1">
+    <h2>
+      <span class="step-badge">1</span>
+      Detect Display Info
+    </h2>
+    <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:16px;">
+      Uses <code>window.screen</code>, <code>devicePixelRatio</code>, CSS media queries,
+      and a requestAnimationFrame refresh-rate estimator.
+    </p>
+    <button class="btn btn-primary" id="detect-btn">Detect My Display</button>
+
+    <div id="display-result" class="hidden" style="margin-top:20px;">
+      <table class="info-table" id="display-table"></table>
+    </div>
+  </section>
+
+  <!-- Step 2: Dead Pixel Test -->
+  <section class="card hidden" id="step2">
+    <h2>
+      <span class="step-badge">2</span>
+      Dead Pixel Test
+    </h2>
+    <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:12px;">
+      The screen will cycle through 8 solid test colors. Click any pixel that looks wrong
+      and classify it. Use <kbd style="background:#333;padding:1px 5px;border-radius:3px;">→</kbd>
+      or <kbd style="background:#333;padding:1px 5px;border-radius:3px;">Space</kbd> to advance.
+    </p>
+
+    <div class="color-legend" aria-label="Test colors">
+      <div class="swatch" style="background:#000;" title="Black"></div>
+      <div class="swatch" style="background:#fff;" title="White"></div>
+      <div class="swatch" style="background:#f00;" title="Red"></div>
+      <div class="swatch" style="background:#0f0;" title="Green"></div>
+      <div class="swatch" style="background:#00f;" title="Blue"></div>
+      <div class="swatch" style="background:#0ff;" title="Cyan"></div>
+      <div class="swatch" style="background:#f0f;" title="Magenta"></div>
+      <div class="swatch" style="background:#ff0;" title="Yellow"></div>
+    </div>
+
+    <button class="btn btn-primary" id="test-btn" style="margin-top:16px;">
+      Start Dead Pixel Test
+    </button>
+  </section>
+
+  <!-- Step 3: Results -->
+  <section class="card hidden" id="step3">
+    <h2>
+      <span class="step-badge">3</span>
+      Results
+    </h2>
+    <div id="result-verdict" class="verdict">—</div>
+    <p id="result-reason"></p>
+
+    <table class="info-table" id="result-summary" style="margin-top:12px;"></table>
+
+    <div class="result-actions">
+      <button class="btn btn-primary hidden" id="export-btn">Export PDF</button>
+      <button class="btn btn-ghost" onclick="location.reload()">Start Over</button>
+    </div>
+  </section>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="/assets/js/display-detector.js"></script>
+<script src="/assets/js/modal.js"></script>
+<script src="/assets/js/pixel-tester.js"></script>
+<script src="/assets/js/pdf-export.js"></script>
+<script src="/assets/js/main.js"></script>
+</body>
+</html>
