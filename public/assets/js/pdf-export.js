@@ -516,37 +516,66 @@ const PdfExport = (() => {
 
     y = sectionHeading(doc, `Colour Screen ${stepNumber} of 8 — ${meta.name}`, y);
 
-    // ── Coloured test rectangle
-    const rectY = y, rectH = 110;
+    // ── Rectangle sized to match the actual screen aspect ratio ──────────────
+    // Max bounds that still leave room for description + defects + footer
+    const MAX_RECT_W = CW;
+    const MAX_RECT_H = 115;
+    const ratio = sw / sh;
+
+    let rectW, rectH;
+    if (ratio >= 1) {
+      // Landscape / square — fill the width, derive height
+      rectW = MAX_RECT_W;
+      rectH = Math.min(rectW / ratio, MAX_RECT_H);
+    } else {
+      // Portrait (mobile) — fill the height, derive width
+      rectH = MAX_RECT_H;
+      rectW = Math.min(rectH * ratio, MAX_RECT_W);
+    }
+    rectW = Math.round(rectW * 10) / 10;
+    rectH = Math.round(rectH * 10) / 10;
+
+    // Centre horizontally so portrait rects don't hug the left margin
+    const rectX = M + (CW - rectW) / 2;
+    const rectY = y;
+
     fill(doc, [cr, cg, cb]);
-    doc.rect(M, rectY, CW, rectH, 'F');
+    doc.rect(rectX, rectY, rectW, rectH, 'F');
 
     // Colour name centred on the rectangle
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(22);
+    doc.setFontSize(Math.min(22, rectW * 0.16));   // scale title to rect width
     ink(doc, onColor);
-    doc.text(meta.name.toUpperCase(), M + CW / 2, rectY + rectH / 2 - 4, { align: 'center' });
+    doc.text(meta.name.toUpperCase(), rectX + rectW / 2, rectY + rectH / 2 - 4, { align: 'center' });
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
+    doc.setFontSize(7.5);
     ink(doc, onColor);
     doc.text(
       `${colorHex}  ·  rgb(${cr}, ${cg}, ${cb})`,
-      M + CW / 2, rectY + rectH / 2 + 6, { align: 'center' },
+      rectX + rectW / 2, rectY + rectH / 2 + 5, { align: 'center' },
     );
 
-    // ── Defect markers
-    // Common defects → orange double-ring; colour-specific → contrasting circle
+    // Screen dimensions label — shows what device size was tested
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.5);
+    ink(doc, INK.faint);
+    doc.text(
+      `Tested at ${sw} × ${sh} px`,
+      rectX + rectW / 2, rectY + rectH + 2.5, { align: 'center' },
+    );
+
+    // ── Defect markers — positions are proportional to the actual rect bounds
     defects.forEach((defect) => {
-      const px = M      + (defect.x / sw) * CW;
-      const py = rectY  + (defect.y / sh) * rectH;
+      const px = rectX + (defect.x / sw) * rectW;
+      const py = rectY + (defect.y / sh) * rectH;
 
       if (defect.isCommon) {
-        draw(doc, [220, 120, 0]);   // orange
+        draw(doc, [220, 120, 0]);
         doc.setLineWidth(0.55);
-        doc.circle(px, py, 2.4, 'S');   // outer ring
+        doc.circle(px, py, 2.4, 'S');
         doc.setLineWidth(0.3);
-        doc.circle(px, py, 1.2, 'S');   // inner ring
+        doc.circle(px, py, 1.2, 'S');
         doc.line(px - 4.5, py, px + 4.5, py);
         doc.line(px, py - 4.5, px, py + 4.5);
       } else {
@@ -563,9 +592,9 @@ const PdfExport = (() => {
       doc.text(`(${defect.x}, ${defect.y})`, px + 2.8, py - 0.5);
     });
 
-    // ── Status badge (top-right of rectangle)
+    // ── Status badge anchored to the top-right corner of the rect
     const badgeW = defects.length === 0 ? 18 : 30;
-    const bx = M + CW - badgeW - 2;
+    const bx = rectX + rectW - badgeW - 2;
 
     fill(doc, defects.length === 0 ? INK.pass : INK.fail);
     doc.roundedRect(bx, rectY + 3, badgeW, 7.5, 1.5, 1.5, 'F');
@@ -576,7 +605,7 @@ const PdfExport = (() => {
       `${defects.length} DEFECT${defects.length !== 1 ? 'S' : ''}`;
     doc.text(badgeText, bx + badgeW / 2, rectY + 8, { align: 'center' });
 
-    y = rectY + rectH + 5;
+    y = rectY + rectH + 8;   // +3 extra to clear the dimension label
 
     // ── Description box
     fill(doc, INK.surface);
