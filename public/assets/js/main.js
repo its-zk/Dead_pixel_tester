@@ -37,6 +37,7 @@ async function runDisplayDetection() {
   const btn = el('detect-btn');
   btn.disabled = true;
   btn.textContent = 'Detecting…';
+  Anim.startScan('step1', 'detect-btn');
 
   try {
     state.sessionId = generateSessionId();
@@ -47,7 +48,11 @@ async function runDisplayDetection() {
     state.displayInfoId = saved.id;
 
     show('display-result');
-    show('step2');
+    Anim.staggerRows('display-table');
+
+    Anim.revealCard('step2');
+    Anim.revealSwatches();
+
     btn.textContent = 'Re-detect';
   } catch (err) {
     await Modal.alert('Detection failed: ' + err.message, 'error');
@@ -55,6 +60,7 @@ async function runDisplayDetection() {
     btn.textContent = 'Detect My Display';
   } finally {
     btn.disabled = false;
+    Anim.stopScan('step1', 'detect-btn');
   }
 }
 
@@ -153,13 +159,13 @@ async function showReport() {
       displayInfoId: state.displayInfoId,
     });
     renderReport(report);
-    show('step3');
+    Anim.revealCard('step3');
   } catch (err) {
     console.error(err);
     el('result-verdict').textContent = 'Error';
     el('result-verdict').className = 'verdict incomplete';
     el('result-reason').textContent = 'Failed to generate report. Check the console.';
-    show('step3');
+    Anim.revealCard('step3');
   }
 }
 
@@ -173,13 +179,26 @@ function renderReport(report) {
 
   const s = report.summary;
   el('result-summary').innerHTML = `
-    <tr><td class="label">Dead pixels</td><td>${s.totalDeadPixels}</td></tr>
-    <tr><td class="label">Stuck pixels</td><td>${s.totalStuckPixels}</td></tr>
-    <tr><td class="label">Hot pixels</td><td>${s.totalHotPixels}</td></tr>
+    <tr><td class="label">Dead pixels</td><td>0</td></tr>
+    <tr><td class="label">Stuck pixels</td><td>0</td></tr>
+    <tr><td class="label">Hot pixels</td><td>0</td></tr>
     <tr><td class="label">Colors tested</td><td>${s.colorsTestedCount} / 8</td></tr>
   `;
 
+  // Animate rows in then count up the numbers
+  Anim.staggerRows('result-summary');
+  setTimeout(() => {
+    const tds = el('result-summary').querySelectorAll('tr td:last-child');
+    [s.totalDeadPixels, s.totalStuckPixels, s.totalHotPixels].forEach((n, i) => {
+      if (n > 0) Anim.countUpTable('result-summary');
+      tds[i].textContent = n;
+    });
+  }, 400);
+
+  Anim.animateVerdict(report.verdict);
   el('export-btn').classList.remove('hidden');
+
+  if (report.verdict === 'PASS') setTimeout(Anim.confetti, 300);
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
